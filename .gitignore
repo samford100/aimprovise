@@ -2,4 +2,5 @@
 /public/build/
 /progress_vids/
 
+.env
 .DS_Store
