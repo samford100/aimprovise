@@ -196,29 +196,17 @@
       {/each}
     </div>
 
-    <!-- -->
-    <ul class="flex justify-center space-x-2 mb-0">
-      {#each octaves as octave, idx}
-        <button on:click={() => increaseOctave(idx)} class="border-none font-bold inline list-none rounded-full w-7 h-7 items-center flex justify-center">{"+"}</button>
-      {/each}
-    </ul>
-    <ul class="flex justify-center space-x-2 mb-0">
+    <ul class="flex justify-center space-x-2 mb-4">
       <button on:click={() => rotateLeftOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"‹"}</button>
       {#each rotatedNotes as note, idx}
         {#if notesInChords.has(note)}
-          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-800 inline list-none rounded-full w-7 h-7 items-center flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 75%)">{note}<sub class="text-[.5rem] align-bottom">{octaves[idx]}</sub></button>
+          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-800 inline list-none rounded-full w-7 h-7 items-center flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 75%)">{note}</button>
         {:else}
-          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-200 inline list-none rounded-full bg-white-300 w-7 h-7 items-center flex justify-center">{note}<sub class="text-xs align-bottom">{octaves[idx]}</sub></button>
+          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-200 inline list-none rounded-full bg-white-300 w-7 h-7 items-center flex justify-center">{note}</button>
         {/if}
       {/each}
       <button on:click={() => rotateRightOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"›"}</button>
     </ul>
-    <ul class="flex justify-center space-x-2 mb-4">
-      {#each octaves as octave, idx}
-        <button on:click={() => decreaseOctave(idx)} class="border-none font-bold inline list-none rounded-full w-7 h-7 items-center flex justify-center">{"-"}</button>
-      {/each}
-    </ul>
-    <!-- -->
 
     <div class="flex flex-wrap justify-center">
       <button on:click={handleJazzify} id="jazzify" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Jazzify</button>
