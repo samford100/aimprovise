@@ -10,20 +10,20 @@
   let chords = ["G", "Em", "C", "D"];
   let chord = "";
   let rotatedNotes = notes;
+  let octave = 4;
 
   /* Reactive vars */
   $: notesInChords = new Set(chords.flatMap(chordToNotes));
 
   // construct octaves based on rotated notes s.t. pitch increases left to right
-  $: octaves = ((rotatedNotes) => {
-    let octave = 4;
+  $: octaves = ((rotatedNotes, octave) => {
     return rotatedNotes.map((note, index) => {
       if (note === "C" && index !== 0) {
-        octave = 5;
+        octave += 1;
       }
       return octave;
     });
-  })(rotatedNotes);
+  })(rotatedNotes, octave);
 
   /* Sound functions */
   const playAll = () => {
@@ -34,17 +34,13 @@
   const playChord = (idx, time) => {
     const notesInChord = chordToNotes(chords[idx]);
     // Map each note in the chord to 'note + octave' like C4, D5
-    const notesToPlay = notesInChord.map(
-      (note) => note + octaves[rotatedNotes.indexOf(note)]
-    );
+    const notesToPlay = notesInChord.map(note => note + octaves[rotatedNotes.indexOf(note)]);
     polySynth.triggerAttackRelease(notesToPlay, "4n", time);
   };
 
-  const playNote = (idx) =>
-    polySynth.triggerAttackRelease(rotatedNotes[idx] + octaves[idx], "4n");
-
-  const increaseOctave = (idx) => octaves[idx] = octaves[idx] + 1;
-  const decreaseOctave = (idx) => octaves[idx] = octaves[idx] - 1;
+  const playNote = (idx) => {
+    polySynth.triggerAttackRelease(rotatedNotes[idx] + "" + octaves[idx], "4n");
+  }
 
   /* Music theory functions */
   const fromDegrees = (root, degrees) => degrees.map(degree => notes[(notes.indexOf(root) + degree) % 12]);
@@ -97,6 +93,40 @@
   const rotateLeftOnce = () => rotatedNotes = [...rotatedNotes.slice(1), rotatedNotes[0]];
 
   const rotateRightOnce = () => rotatedNotes = [ rotatedNotes[rotatedNotes.length - 1], ...rotatedNotes.slice(0, rotatedNotes.length - 1) ];
+
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowLeft") {
+      rotateLeftOnce();
+    } else if (e.key === "ArrowRight") {
+      rotateRightOnce();
+    } else if (e.key === "ArrowUp") {
+      octave += 1;
+    } else if (e.key === "ArrowDown") {
+      octave -= 1;
+    } else if (e.key === "a") {
+      playNote(0);
+    } else if (e.key === "s") {
+      playNote(1);
+    } else if (e.key === "d") {
+      playNote(2);
+    } else if (e.key === "f") {
+      playNote(3);
+    } else if (e.key === "g") {
+      playNote(4);
+    } else if (e.key === "h") {
+      playNote(5);
+    } else if (e.key === "j") {
+      playNote(6);
+    } else if (e.key === "k") {
+      playNote(7);
+    } else if (e.key === "l") {
+      playNote(8);
+    } else if (e.key === ";") {
+      playNote(9);
+    } else if (e.key === "'") {
+      playNote(10);
+    } 
+  }
 
   /* GPT  handlers */
   const handleJazzify = async () => {
@@ -221,3 +251,5 @@
     <input bind:value={apiKey} type="password" placeholder="OpenAI API KEY" class="bg-gray-100 hover:bg-gray-200 text-black py-2 px-4 rounded text-center"/>
   </div>
 </div>
+
+<svelte:window on:keydown|preventDefault={handleKeyDown} />
