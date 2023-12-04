@@ -1,4 +1,6 @@
 <script>
+  import {flip} from 'svelte/animate';
+
   /* setup */
   let apiKey = "";
 
@@ -95,6 +97,11 @@
   const rotateRightOnce = () => rotatedNotes = [ rotatedNotes[rotatedNotes.length - 1], ...rotatedNotes.slice(0, rotatedNotes.length - 1) ];
 
   const handleKeyDown = (e) => {
+    // check if the text box is not focused
+    if (document.activeElement.id === "chord") {
+      return;
+    }
+
     if (e.key === "ArrowLeft") {
       rotateLeftOnce();
     } else if (e.key === "ArrowRight") {
@@ -103,29 +110,31 @@
       octave += 1;
     } else if (e.key === "ArrowDown") {
       octave -= 1;
-    } else if (e.key === "a") {
+    } else if (e.key === "q") {
       playNote(0);
-    } else if (e.key === "s") {
+    } else if (e.key === "w") {
       playNote(1);
-    } else if (e.key === "d") {
+    } else if (e.key === "e") {
       playNote(2);
-    } else if (e.key === "f") {
+    } else if (e.key === "r") {
       playNote(3);
-    } else if (e.key === "g") {
+    } else if (e.key === "t") {
       playNote(4);
-    } else if (e.key === "h") {
+    } else if (e.key === "y") {
       playNote(5);
-    } else if (e.key === "j") {
+    } else if (e.key === "u") {
       playNote(6);
-    } else if (e.key === "k") {
+    } else if (e.key === "i") {
       playNote(7);
-    } else if (e.key === "l") {
+    } else if (e.key === "o") {
       playNote(8);
-    } else if (e.key === ";") {
+    } else if (e.key === "p") {
       playNote(9);
-    } else if (e.key === "'") {
+    } else if (e.key === "[") {
       playNote(10);
-    } 
+    } else if (e.key === "]") {
+      playNote(11);
+    }
   }
 
   /* GPT  handlers */
@@ -228,12 +237,14 @@
 
     <ul class="flex justify-center space-x-2 mb-4">
       <button on:click={() => rotateLeftOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"‹"}</button>
-      {#each rotatedNotes as note, idx}
+      {#each rotatedNotes as note, idx (note)}
+      <div animate:flip={{duration: 100}}>
         {#if notesInChords.has(note)}
-          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-800 inline list-none rounded-full w-7 h-7 items-center flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 75%)">{note}</button>
+          <button  on:click={() => playNote(idx)} class="border-none click:bg-gray-800 inline list-none rounded-full w-7 h-7 items-center flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 75%)">{note}</button>
         {:else}
           <button on:click={() => playNote(idx)} class="border-none click:bg-gray-200 inline list-none rounded-full bg-white-300 w-7 h-7 items-center flex justify-center">{note}</button>
         {/if}
+      </div>
       {/each}
       <button on:click={() => rotateRightOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"›"}</button>
     </ul>
@@ -252,4 +263,4 @@
   </div>
 </div>
 
-<svelte:window on:keydown|preventDefault={handleKeyDown} />
+<svelte:window on:keydown={handleKeyDown}/>
