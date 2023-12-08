@@ -12,6 +12,11 @@
     localStorage.setItem("savedProgressions", JSON.stringify(value));
   });
 
+  // initialize the store if it doesn't exist
+  if (!$savedProgressionsStore) {
+    savedProgressionsStore.set([]);
+  }
+
   /* setup */
   let apiKey = "";
 
