@@ -1,5 +1,16 @@
 <script>
-  import {flip} from 'svelte/animate';
+  import { flip } from 'svelte/animate';
+  import { writable, get } from 'svelte/store'
+  import Color from 'color';
+  import Button from './Button.svelte';
+
+  const localStorageProgressions = localStorage.getItem("savedProgressions");
+  const savedProgressionsStore = writable(JSON.parse(localStorageProgressions));
+
+  // save the entire progression on a call to set()
+  savedProgressionsStore.subscribe(value => {
+    localStorage.setItem("savedProgressions", JSON.stringify(value));
+  });
 
   /* setup */
   let apiKey = "";
@@ -9,7 +20,7 @@
   const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
 
   /* global vars */
-  let chords = ["G", "Em", "C", "D"];
+  let chords = ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"];
   let chord = "";
   let rotatedNotes = notes;
   let octave = 4;
@@ -53,6 +64,9 @@
   const maj7 = (root) => fromDegrees(root, [0, 4, 7, 11]);
   const min7 = (root) => fromDegrees(root, [0, 3, 7, 10]);
   const dom7 = (root) => fromDegrees(root, [0, 4, 7, 10]);
+  // half diminished
+  const dim7 = (root) => fromDegrees(root, [0, 3, 6, 10]);
+  const fdim7 = (root) => fromDegrees(root, [0, 3, 6, 9]);
 
   const _chordToNotes = (() => {
     const chordToNotes = {};
@@ -64,6 +78,8 @@
       chordToNotes[root + "maj7"] = maj7(root);
       chordToNotes[root + "m7"] = min7(root);
       chordToNotes[root + "7"] = dom7(root);
+      chordToNotes[root + "dim7"] = dim7(root);
+      chordToNotes[root + "fdim7"] = fdim7(root);
     }
     return chordToNotes;
   })();
@@ -73,11 +89,20 @@
   /* UI helpers */
   const getHue = (note) => {
     const idx = notes.indexOf(note);
-    return Math.sin(idx / 12) * 360;
+    const hue = Math.sin(idx / 12) * 360;
+    return hue;
   };
+
+  // function to take in hue and return it as hex, lightened
+  const lightenColor = (hue, amount=.1) => {
+    return Color.hsl(hue, 80, 50).lighten(amount).hex(); 
+  }
 
   /* Button handlers */
   const handleAddChord = () => {
+    if (chordToNotes(chord) === undefined) {
+      return;
+    }
     chords.push(chord);
     chords = chords;
     chord = "";
@@ -85,11 +110,25 @@
 
   const handleClear = () => (chords = []);
 
+  const handleSave = () => {
+    const progressionsArray = get(savedProgressionsStore);
+    progressionsArray.push([...chords]);
+    savedProgressionsStore.set(progressionsArray);
+  };
+
+  const handleRemoveSavedProgression = (idx) => {
+    const progressionsArray = get(savedProgressionsStore);
+    progressionsArray.splice(idx, 1);
+    savedProgressionsStore.set(progressionsArray);
+  };
+
+  const setChords = (progression) => {
+    chords = [...progression]
+  };
+
   const handleRemoveChord = (idx) => {
-    return () => {
-      chords.splice(idx, 1);
-      chords = chords;
-    };
+    chords.splice(idx, 1);
+    chords = chords;
   };
 
   const rotateLeftOnce = () => rotatedNotes = [...rotatedNotes.slice(1), rotatedNotes[0]];
@@ -101,7 +140,6 @@
     if (document.activeElement.id === "chord") {
       return;
     }
-
     if (e.key === "ArrowLeft") {
       rotateLeftOnce();
     } else if (e.key === "ArrowRight") {
@@ -214,52 +252,93 @@
   };
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-0">
-  <div class="bg-gray-10 p-8 rounded-lg shadow-lg max-w-xl w-full">
-    <div class="flex items-center justify-center">
-      <h2 class="text-1xl font-bold mb-4 text-center items-center justify-center bg-gradient-to-r from-red-400 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text">
-        A I M P R O V I S E
+<div class="flex">
+  <!-- Main --> 
+  <div class="flex-grow flex items-center justify-center min-h-screen">
+    <div class="bg-gray-10 p-8 rounded-lg shadow-lg max-w-xl">
+      <div class="flex items-center justify-center">
+        <h2 class="text-1xl font-bold mb-4 text-center bg-gradient-to-r from-red-400 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text">
+          A I M P R O V I S E
+        </h2>
+      </div>
+      <form on:submit|preventDefault={() => null} class="flex justify-center mb-4 space-x-4">
+        <input bind:value={chord} placeholder="Add Chord" id="chord" class="bg-gray-100 hover:bg-gray-200 text-black mt-3 h-19 px-4 rounded" />
+        <Button onClick={handleAddChord} text="Add Chord" id="add-chord" />
+        <Button onClick={playAll} text="Play All" id="play-all" />
+      </form>
+      <div class="flex flex-wrap justify-center mb-4 space-x-4">
+        <!-- TODO: make chords a list of objects with unique ids so the animations work -->
+        {#each chords as chord, idx (idx)}
+          <div class="relative group">
+            <button 
+               on:click={() => playChord(idx, Tone.now())} 
+               class="chord-button 
+               button w-20 h-12 
+               rounded-lg cursor-pointer select-none
+               active:translate-y-2  
+               active:border-b-[0px]
+               transition-all duration-150 
+               border-b-[0px] 
+               text-gray-700 font-bold text-lg mx-1 my-3"
+               style="background-color: hsl({getHue(chord[0])}, 100%, 80%);
+               box-shadow: 0px 10px 0px 0px {lightenColor(getHue(chord[0]))},0 15px 0 0 {lightenColor(getHue(chord[0]))}41;
+               ">
+               {chord}
+              </button>
+            <button on:click={() => handleRemoveChord(idx)} class="absolute top-0 right-[-8px] p-2 w-4 h-4 font-bold text-gray-700 rounded-full bg-white flex items-center justify-center font-mono opacity-0 group-hover:opacity-100">×</button>
+          </div>
+        {/each}
+      </div>
+
+      <ul class="flex justify-center space-x-2 mb-4 mt-6">
+        <button on:click={() => rotateLeftOnce()} class="border-none font-bold list-none rounded-full bg-white-300 w-6 h-6 flex justify-center">{"‹"}</button>
+        {#each rotatedNotes as note, idx (note)}
+          <div class="" animate:flip={{duration: 100}}>
+            {#if notesInChords.has(note)}
+              <button on:click={() => playNote(idx)} class="font-bold items-center border-none click:bg-gray-800 list-none rounded-full w-7 h-7 flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 80%)">{note}</button>
+            {:else}
+              <button on:click={() => playNote(idx)} class="items-center border-none click:bg-gray-200 list-none rounded-full bg-white-300 w-7 h-7 flex justify-center">{note}</button>
+            {/if}
+          </div>
+        {/each}
+        <button on:click={() => rotateRightOnce()} class="border-none font-bold list-none rounded-full bg-white-300 w-6 h-6 flex justify-center">{"›"}</button>
+      </ul>
+
+      <div class="flex-wrap flex justify-center">
+        <Button onClick={handleJazzify} text="Jazzify" />
+        <Button onClick={handleDarken} text="Darken" />
+        <Button onClick={handleBrighten} text="Brighten" />
+        <Button onClick={handleEmbellish} text="Embellish" />
+        <Button onClick={handleExtend} text="Extend" />
+        <Button onClick={handleClear} text="Clear" />
+        <Button onClick={handleSave} text="Save" />
+      </div>
+    </div>
+
+    <div class="fixed bottom-1">
+      <input bind:value={apiKey} type="password" placeholder="OpenAI API KEY" class="bg-gray-100 hover:bg-gray-200 text-black py-2 px-4 rounded text-center"/>
+    </div>
+  </div>
+  <!-- Sidebar -->
+  <div class="w-auto max-w-xl bg-gray-10 p-2 rounded-lg shadow-xl">
+    <div class="items-center justify-center flex mt-10 mb-5">
+      <h2 class="text-1xl font-bold mb-4 text-center bg-gradient-to-r from-red-400 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text">
+        My progressions
       </h2>
     </div>
-    <form on:submit|preventDefault={() => null} class="flex justify-center mb-4 space-x-4">
-      <input bind:value={chord} placeholder="Add Chord" id="chord" class="bg-gray-100 hover:bg-gray-200 text-black py-2 px-4 rounded" />
-      <button on:click={handleAddChord} id="add-chord" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded" >Add Chord</button>
-      <button on:click={() => playAll()} class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded" >Play</button>
-    </form>
-    <div class="flex flex-wrap justify-center mb-4 space-x-4">
-      {#each chords as chord, idx}
-        <div class="relative group">
-          <button on:click={() => playChord(idx, Tone.now())} class="border-none my-2 p-2 w-20 font-bold rounded" style="background-color: hsl({getHue(chord[0])}, 100%, 75%)">{chord}</button>
-          <button on:click={handleRemoveChord(idx)} class="absolute top-0 right-[-8px] p-2 w-4 h-4 font-bold text-gray-700 rounded-full bg-white flex items-center justify-center font-mono opacity-0 group-hover:opacity-100">x</button>
+    <div class="mb-1 flex-wrap">
+      {#each $savedProgressionsStore as progression, i (i)}
+        <div class="mb-4 flex items-center">
+          <button on:click={() => setChords(progression)} class="items-center border-none font-bold inline list-none rounded-full bg-white-300 m-2 flex justify-center">{"‹"}</button>
+          <div class="overflow-auto flex-grow w-96">
+            {#each progression as chord}
+                <button class="m-2 border-none my-2 p-2 w-20 font-bold rounded" style="background-color: hsl({getHue(chord[0])}, 100%, 80%)">{chord}</button>
+            {/each}
+          </div>
+          <button on:click={handleRemoveSavedProgression(i)} class="items-center border-none m-2 font-bold inline list-none rounded-full bg-white-300 flex justify-center">{"×"}</button>
         </div>
       {/each}
     </div>
-
-    <ul class="flex justify-center space-x-2 mb-4">
-      <button on:click={() => rotateLeftOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"‹"}</button>
-      {#each rotatedNotes as note, idx (note)}
-      <div animate:flip={{duration: 100}}>
-        {#if notesInChords.has(note)}
-          <button  on:click={() => playNote(idx)} class="border-none click:bg-gray-800 inline list-none rounded-full w-7 h-7 items-center flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 75%)">{note}</button>
-        {:else}
-          <button on:click={() => playNote(idx)} class="border-none click:bg-gray-200 inline list-none rounded-full bg-white-300 w-7 h-7 items-center flex justify-center">{note}</button>
-        {/if}
-      </div>
-      {/each}
-      <button on:click={() => rotateRightOnce()} class="border-none font-bold inline list-none rounded-full bg-white-300 w-6 h-6 items-center flex justify-center">{"›"}</button>
-    </ul>
-
-    <div class="flex flex-wrap justify-center">
-      <button on:click={handleJazzify} id="jazzify" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Jazzify</button>
-      <button on:click={handleDarken} id="jazzify" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Darken</button>
-      <button on:click={handleBrighten} id="jazzify" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Brighten</button>
-      <button on:click={handleEmbellish} id="jazzify" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Embellish</button>
-      <button on:click={handleExtend} id="extend" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Extend</button>
-      <button on:click={handleClear} id="clear" class="m-2 bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Clear</button>
-    </div>
-  </div>
-  <div class="fixed bottom-1">
-    <input bind:value={apiKey} type="password" placeholder="OpenAI API KEY" class="bg-gray-100 hover:bg-gray-200 text-black py-2 px-4 rounded text-center"/>
   </div>
 </div>
 

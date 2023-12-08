@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.chord-button:active {
+  box-shadow: 0 0px 0 0 #FFFFFF !important;
+}
+
+.action-button:active {
+  box-shadow: 0 0px 0 0 rgb(189, 188, 188),0 0px 0 0 rgb(239, 239, 239);
+}
+.action-button {
+  background-color: rgb(236, 236, 236);
+  box-shadow: 0 10px 0 0 rgb(212, 211, 211),0 15px 0 0 rgb(239, 239, 239);
+  border-color: white;
+}
