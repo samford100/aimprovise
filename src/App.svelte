@@ -26,12 +26,14 @@
 
   /* global vars */
   let chords = ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"];
+  // let chords = ["C", "Dm", "G"];
   let chord = "";
   let rotatedNotes = notes;
   let octave = 4;
 
   /* Reactive vars */
   $: notesInChords = new Set(chords.flatMap(chordToNotes));
+  $: highlightedNotes = [];
 
   // construct octaves based on rotated notes s.t. pitch increases left to right
   $: octaves = ((rotatedNotes, octave) => {
@@ -57,7 +59,8 @@
   };
 
   const playNote = (idx) => {
-    polySynth.triggerAttackRelease(rotatedNotes[idx] + "" + octaves[idx], "4n");
+    const newOctave = Number(octaves[idx % 12] + Math.floor(idx / 12));
+    polySynth.triggerAttackRelease(rotatedNotes[idx % 12] + "" + newOctave, "4n");
   }
 
   /* Music theory functions */
@@ -150,33 +153,39 @@
     } else if (e.key === "ArrowRight") {
       rotateRightOnce();
     } else if (e.key === "ArrowUp") {
-      octave += 1;
+      if (octave < 8) {
+        octave += 1;
+      }
     } else if (e.key === "ArrowDown") {
-      octave -= 1;
-    } else if (e.key === "q") {
+      if (octave > 0) {
+        octave -= 1;
+      }
+    } else if (e.key === "q" || e.key == "1") {
       playNote(0);
     } else if (e.key === "w") {
       playNote(1);
-    } else if (e.key === "e") {
+    } else if (e.key === "e" || e.key === "2") {
       playNote(2);
     } else if (e.key === "r") {
       playNote(3);
-    } else if (e.key === "t") {
+    } else if (e.key === "t" || e.key === "3") {
       playNote(4);
-    } else if (e.key === "y") {
+    } else if (e.key === "y" || e.key === "4") {
       playNote(5);
     } else if (e.key === "u") {
       playNote(6);
-    } else if (e.key === "i") {
+    } else if (e.key === "i" || e.key === "5") {
       playNote(7);
     } else if (e.key === "o") {
       playNote(8);
-    } else if (e.key === "p") {
+    } else if (e.key === "p" || e.key === "6") {
       playNote(9);
     } else if (e.key === "[") {
       playNote(10);
-    } else if (e.key === "]") {
+    } else if (e.key === "]" || e.key === "7") {
       playNote(11);
+    } else if (e.key == "\\" || e.key == "8") {
+      playNote(12); // play the root note one octave higher
     }
   }
 
@@ -277,6 +286,8 @@
           <div class="relative group">
             <button 
                on:click={() => playChord(idx, Tone.now())} 
+               on:mouseenter={() => highlightedNotes = chordToNotes(chords[idx])}
+               on:mouseleave={() => highlightedNotes = []}
                class="chord-button 
                button w-20 h-12 
                rounded-lg cursor-pointer select-none
@@ -300,7 +311,11 @@
         {#each rotatedNotes as note, idx (note)}
           <div class="" animate:flip={{duration: 100}}>
             {#if notesInChords.has(note)}
-              <button on:click={() => playNote(idx)} class="font-bold items-center border-none click:bg-gray-800 list-none rounded-full w-7 h-7 flex justify-center" style="background-color: hsl({getHue(note)}, 100%, 80%)">{note}</button>
+              <button on:click={() => playNote(idx)} 
+                class="{highlightedNotes.includes(note) ? "border-solid border-2 border-gray-500" : "rounded-full"} 
+                transition ease-in-out duration-250 
+                font-bold items-center  click:bg-gray-800 list-none w-7 h-7 flex justify-center" 
+                style="background-color: hsl({getHue(note)}, 100%, 80%)">{note}</button>
             {:else}
               <button on:click={() => playNote(idx)} class="items-center border-none click:bg-gray-200 list-none rounded-full bg-white-300 w-7 h-7 flex justify-center">{note}</button>
             {/if}
