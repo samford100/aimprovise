@@ -25,6 +25,7 @@
   const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
 
   /* global vars */
+  // TODO: load from local storage - last progression
   let chords = ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"];
   // let chords = ["C", "Dm", "G"];
   let chord = "";
@@ -75,6 +76,8 @@
   // half diminished
   const dim7 = (root) => fromDegrees(root, [0, 3, 6, 10]);
   const fdim7 = (root) => fromDegrees(root, [0, 3, 6, 9]);
+  const maj9 = (root) => fromDegrees(root, [0, 4, 7, 11, 14]);
+  const add9 = (root) => fromDegrees(root, [0, 4, 7, 14]);
 
   const _chordToNotes = (() => {
     const chordToNotes = {};
@@ -88,9 +91,13 @@
       chordToNotes[root + "7"] = dom7(root);
       chordToNotes[root + "dim7"] = dim7(root);
       chordToNotes[root + "fdim7"] = fdim7(root);
+      chordToNotes[root + "9"] = maj9(root);
+      chordToNotes[root + "add9"] = add9(root);
     }
     return chordToNotes;
   })();
+
+  const allChords = Object.keys(_chordToNotes).sort();
 
   const chordToNotes = (chord) => _chordToNotes[chord];
 
@@ -263,6 +270,7 @@
       .then((data) => {
         return data;
       });
+
   };
 </script>
 
@@ -276,8 +284,13 @@
         </h2>
       </div>
       <form on:submit|preventDefault={() => null} class="flex justify-center mb-4 space-x-4">
-        <input bind:value={chord} placeholder="Add Chord" id="chord" class="bg-gray-100 hover:bg-gray-200 text-black mt-3 h-19 px-4 rounded" />
-        <Button onClick={handleAddChord} text="Add Chord" id="add-chord" />
+        <input autocomplete="off" list="allChords" bind:value={chord} placeholder="Add Chord" id="chord" class="bg-gray-100 hover:bg-gray-200 text-black mt-3 h-19 px-4 rounded" />
+        <datalist id="allChords">
+          {#each allChords as option (option)}
+            <option  class="font-bold" value={option}></option>
+          {/each}
+        </datalist>
+        <Button  onClick={handleAddChord} text="Add Chord" id="add-chord" />
         <Button onClick={playAll} text="Play All" id="play-all" />
       </form>
       <div class="flex flex-wrap justify-center mb-4 space-x-4">
@@ -325,13 +338,13 @@
       </ul>
 
       <div class="flex-wrap flex justify-center">
-        <Button onClick={handleJazzify} text="Jazzify" />
-        <Button onClick={handleDarken} text="Darken" />
-        <Button onClick={handleBrighten} text="Brighten" />
-        <Button onClick={handleEmbellish} text="Embellish" />
-        <Button onClick={handleExtend} text="Extend" />
-        <Button onClick={handleClear} text="Clear" />
-        <Button onClick={handleSave} text="Save" />
+        <Button id="jazzify" onClick={handleJazzify} text="Jazzify" />
+        <Button id="darken" onClick={handleDarken} text="Darken" />
+        <Button id="brighten" onClick={handleBrighten} text="Brighten" />
+        <Button id="embellish" onClick={handleEmbellish} text="Embellish" />
+        <Button id="extend" onClick={handleExtend} text="Extend" />
+        <Button id="clear" onClick={handleClear} text="Clear" />
+        <Button id="save" onClick={handleSave} text="Save" />
       </div>
     </div>
 
