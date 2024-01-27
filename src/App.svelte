@@ -30,7 +30,7 @@
   const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
 
   /* global vars */
-  let chords = JSON.parse(localStorage.getItem("lastProgression")).length == 0 ? ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"] : JSON.parse(localStorage.getItem("lastProgression"));
+  let chords = JSON.parse(localStorage.getItem("lastProgression")) == null ? ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"] : JSON.parse(localStorage.getItem("lastProgression"));
   let chord = "";
   let rotatedNotes = notes;
   let octave = 4;
