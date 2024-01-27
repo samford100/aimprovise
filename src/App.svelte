@@ -17,6 +17,11 @@
     savedProgressionsStore.set([]);
   }
 
+  // save current chord progression on page refresh
+  window.onbeforeunload = () => {
+    localStorage.setItem("lastProgression", JSON.stringify(chords));
+  };
+
   /* setup */
   let apiKey = "";
 
@@ -25,9 +30,7 @@
   const notes = [ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" ];
 
   /* global vars */
-  // TODO: load from local storage - last progression
-  let chords = ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"];
-  // let chords = ["C", "Dm", "G"];
+  let chords = JSON.parse(localStorage.getItem("lastProgression")).length == 0 ? ["Em7", "A7", "Dmaj7", "Gmaj7", "C#dim7", "F#7", "Bm7"] : JSON.parse(localStorage.getItem("lastProgression"));
   let chord = "";
   let rotatedNotes = notes;
   let octave = 4;
