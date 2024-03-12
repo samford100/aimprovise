@@ -17,5 +17,5 @@ and in another terminal
 npx tailwindcss -i ./src/input.css -o ./public/build/output.css --watch
 ```
 
-To deploy, push to master and netlify will take care of it and it will be live at https://superlative-chimera-65f033.netlify.app/ 
+To deploy, push to master and netlify will take care of it and it will be live at https://aimprovise.netlify.app/ 
 
